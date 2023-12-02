@@ -13,5 +13,7 @@ your own fun.
 
 Completion Statistics:
 
-|Day|Part 1 Time|Part 1 Rank|Part 2 Time|Part 2 Rank|Blog Post|
-|1|07:31:36|61145|07:44:15|38305||
+| Day | Part 1 Time | Part 1 Rank | Part 2 Time | Part 2 Rank | Blog Post |
+|-----|-------------|-------------|-------------|-------------|-----------|
+| 1   | 07:31:36    | 61145       | 07:44:15    | 38305       |           |
+| 2   | 00:36:08    | 8144        | 00:44:12    | 7838        |           |
