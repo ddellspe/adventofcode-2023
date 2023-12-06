@@ -2,10 +2,9 @@ package net.ddellspe.day05;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.TreeSet;
 import net.ddellspe.utils.InputUtils;
 
 public class Day05 {
@@ -13,121 +12,38 @@ public class Day05 {
 
   public static long part1(String filename) {
     List<String> lines = InputUtils.stringPerLine(filename, Day05.class);
-    Set<Long> seeds = new HashSet<>();
-    List<MappingRange> seedSoilMap = new ArrayList<>();
-    List<MappingRange> soilFertilizerMap = new ArrayList<>();
-    List<MappingRange> fertilizerWaterMap = new ArrayList<>();
-    List<MappingRange> waterLightMap = new ArrayList<>();
-    List<MappingRange> lightTemperatureMap = new ArrayList<>();
-    List<MappingRange> temperatureHumidityMap = new ArrayList<>();
-    List<MappingRange> humidityLocationMap = new ArrayList<>();
-    int section = 0;
+    List<Long> seeds = new ArrayList<>();
+    List<FullMap> maps = new ArrayList<>();
+
+    FullMap current = null;
     for (String line : lines) {
       if (line.isEmpty()) {
+        if (current != null) {
+          maps.add(current);
+        }
+        current = new FullMap();
         continue;
       }
       if (line.startsWith("seeds")) {
         seeds =
-            Arrays.stream(line.split(":")[1].trim().split("[ ]+"))
-                .map(Long::parseLong)
-                .collect(Collectors.toSet());
-      } else if (line.startsWith("humidity-to-location") || section == 7) {
-        if (section != 7) {
-          section = 7;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        humidityLocationMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else if (line.startsWith("temperature-to-humidity") || section == 6) {
-        if (section != 6) {
-          section = 6;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        temperatureHumidityMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else if (line.startsWith("light-to-temperature") || section == 5) {
-        if (section != 5) {
-          section = 5;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        lightTemperatureMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else if (line.startsWith("water-to-light") || section == 4) {
-        if (section != 4) {
-          section = 4;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        waterLightMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else if (line.startsWith("fertilizer-to-water") || section == 3) {
-        if (section != 3) {
-          section = 3;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        fertilizerWaterMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else if (line.startsWith("soil-to-fertilizer") || section == 2) {
-        if (section != 2) {
-          section = 2;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        soilFertilizerMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else {
-        if (section != 1) {
-          section = 1;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        seedSoilMap.add(new MappingRange(values[0], values[1], values[2]));
+            Arrays.stream(line.split(":")[1].trim().split("[ ]+")).map(Long::parseLong).toList();
+        continue;
+      } else if (line.contains(":")) {
+        continue;
       }
+      Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
+      current.addMap(values);
     }
+    maps.add(current);
+
     long minLocation = Long.MAX_VALUE;
-    for (Long seed : seeds) {
-      long soil =
-          seedSoilMap.stream()
-              .filter(range -> range.inRange(seed))
-              .findFirst()
-              .map(mappingRange -> mappingRange.process(seed))
-              .orElse(seed);
-      long fertilizer =
-          soilFertilizerMap.stream()
-              .filter(range -> range.inRange(soil))
-              .findFirst()
-              .map(mappingRange -> mappingRange.process(soil))
-              .orElse(soil);
-      long water =
-          fertilizerWaterMap.stream()
-              .filter(range -> range.inRange(fertilizer))
-              .findFirst()
-              .map(mappingRange -> mappingRange.process(fertilizer))
-              .orElse(fertilizer);
-      long light =
-          waterLightMap.stream()
-              .filter(range -> range.inRange(water))
-              .findFirst()
-              .map(mappingRange -> mappingRange.process(water))
-              .orElse(water);
-      long temperature =
-          lightTemperatureMap.stream()
-              .filter(range -> range.inRange(light))
-              .findFirst()
-              .map(mappingRange -> mappingRange.process(light))
-              .orElse(light);
-      long humidity =
-          temperatureHumidityMap.stream()
-              .filter(range -> range.inRange(temperature))
-              .findFirst()
-              .map(mappingRange -> mappingRange.process(temperature))
-              .orElse(temperature);
-      long location =
-          humidityLocationMap.stream()
-              .filter(range -> range.inRange(humidity))
-              .findFirst()
-              .map(mappingRange -> mappingRange.process(humidity))
-              .orElse(humidity);
-      if (location < minLocation) {
-        minLocation = location;
+    for (long seed : seeds) {
+      long result = seed;
+      for (FullMap map : maps) {
+        result = map.map(result);
+      }
+      if (result < minLocation) {
+        minLocation = result;
       }
     }
     return minLocation;
@@ -136,147 +52,154 @@ public class Day05 {
   public static long part2(String filename) {
     List<String> lines = InputUtils.stringPerLine(filename, Day05.class);
     List<Long> seeds = new ArrayList<>();
-    List<MappingRange> seedSoilMap = new ArrayList<>();
-    List<MappingRange> soilFertilizerMap = new ArrayList<>();
-    List<MappingRange> fertilizerWaterMap = new ArrayList<>();
-    List<MappingRange> waterLightMap = new ArrayList<>();
-    List<MappingRange> lightTemperatureMap = new ArrayList<>();
-    List<MappingRange> temperatureHumidityMap = new ArrayList<>();
-    List<MappingRange> humidityLocationMap = new ArrayList<>();
-    int section = 0;
+    TreeSet<Range> ranges = new TreeSet<>();
+    List<FullMap> maps = new ArrayList<>();
+
+    FullMap current = null;
     for (String line : lines) {
       if (line.isEmpty()) {
+        if (current != null) {
+          maps.add(current);
+        }
+        current = new FullMap();
         continue;
       }
       if (line.startsWith("seeds")) {
         seeds =
-            Arrays.stream(line.split(":")[1].trim().split("[ ]+"))
-                .map(Long::parseLong)
-                .collect(Collectors.toList());
-      } else if (line.startsWith("humidity-to-location") || section == 7) {
-        if (section != 7) {
-          section = 7;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        humidityLocationMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else if (line.startsWith("temperature-to-humidity") || section == 6) {
-        if (section != 6) {
-          section = 6;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        temperatureHumidityMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else if (line.startsWith("light-to-temperature") || section == 5) {
-        if (section != 5) {
-          section = 5;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        lightTemperatureMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else if (line.startsWith("water-to-light") || section == 4) {
-        if (section != 4) {
-          section = 4;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        waterLightMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else if (line.startsWith("fertilizer-to-water") || section == 3) {
-        if (section != 3) {
-          section = 3;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        fertilizerWaterMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else if (line.startsWith("soil-to-fertilizer") || section == 2) {
-        if (section != 2) {
-          section = 2;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        soilFertilizerMap.add(new MappingRange(values[0], values[1], values[2]));
-      } else {
-        System.out.println(line);
-        System.out.println(section);
-        if (section != 1) {
-          section = 1;
-          continue;
-        }
-        Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
-        seedSoilMap.add(new MappingRange(values[0], values[1], values[2]));
+            Arrays.stream(line.split(":")[1].trim().split("[ ]+")).map(Long::parseLong).toList();
+        continue;
+      } else if (line.contains(":")) {
+        continue;
       }
+      Long[] values = Arrays.stream(line.split("[ ]+")).map(Long::parseLong).toArray(Long[]::new);
+      current.addMap(values);
     }
-    long minLocation = Long.MAX_VALUE;
+    maps.add(current);
+
     for (int i = 0; i < seeds.size(); i += 2) {
-      for (long seedVal = seeds.get(i); seedVal < seeds.get(i) + seeds.get(i + 1); seedVal++) {
-        final long seed = seedVal;
-        long soil =
-            seedSoilMap.stream()
-                .filter(range -> range.inRange(seed))
-                .findFirst()
-                .map(mappingRange -> mappingRange.process(seed))
-                .orElse(seed);
-        long fertilizer =
-            soilFertilizerMap.stream()
-                .filter(range -> range.inRange(soil))
-                .findFirst()
-                .map(mappingRange -> mappingRange.process(soil))
-                .orElse(soil);
-        long water =
-            fertilizerWaterMap.stream()
-                .filter(range -> range.inRange(fertilizer))
-                .findFirst()
-                .map(mappingRange -> mappingRange.process(fertilizer))
-                .orElse(fertilizer);
-        long light =
-            waterLightMap.stream()
-                .filter(range -> range.inRange(water))
-                .findFirst()
-                .map(mappingRange -> mappingRange.process(water))
-                .orElse(water);
-        long temperature =
-            lightTemperatureMap.stream()
-                .filter(range -> range.inRange(light))
-                .findFirst()
-                .map(mappingRange -> mappingRange.process(light))
-                .orElse(light);
-        long humidity =
-            temperatureHumidityMap.stream()
-                .filter(range -> range.inRange(temperature))
-                .findFirst()
-                .map(mappingRange -> mappingRange.process(temperature))
-                .orElse(temperature);
-        long location =
-            humidityLocationMap.stream()
-                .filter(range -> range.inRange(humidity))
-                .findFirst()
-                .map(mappingRange -> mappingRange.process(humidity))
-                .orElse(humidity);
-        if (location < minLocation) {
-          minLocation = location;
-        }
-      }
+      ranges.add(new Range(seeds.get(i), seeds.get(i) + seeds.get(i + 1) - 1));
     }
-    return minLocation;
+    mergeRanges(ranges);
+    for (FullMap map : maps) {
+      ranges = map.map(ranges);
+    }
+    return ranges.first().start;
   }
 
-  private static class MappingRange {
-    private final long start;
-    private final long length;
-    private final long change;
+  private static void mergeRanges(TreeSet<Range> ranges) {
+    Range prev = null;
+    for (Iterator<Range> it = ranges.iterator(); it.hasNext(); ) {
+      Range range = it.next();
+      if (prev == null) {
+        prev = range;
+        continue;
+      }
+      if (prev.overlapOrAdjacent(range)) {
+        prev.start = Math.min(prev.start, range.start);
+        prev.end = Math.max(prev.end, range.end);
+        it.remove();
+      } else {
+        prev = range;
+      }
+    }
+  }
 
-    public MappingRange(long destination, long source, long size) {
-      start = source;
-      length = size;
-      change = destination - source;
+  private static class FullMap {
+    private final List<RangeMap> maps = new ArrayList<>();
+
+    public void addMap(Long[] specification) {
+      maps.add(new RangeMap(specification[0], specification[1], specification[2]));
     }
 
-    public boolean inRange(long value) {
-      return value >= start && value <= (start + length);
+    public long map(long source) {
+      for (RangeMap map : maps) {
+        Long candidate = map.map(source);
+        if (candidate != null) {
+          return candidate;
+        }
+      }
+      return source;
     }
 
-    public long process(long value) {
-      return value + change;
+    public TreeSet<Range> map(TreeSet<Range> ranges) {
+      TreeSet<Range> mapped = new TreeSet<>();
+      TreeSet<Range> unmapped = ranges;
+      for (RangeMap map : maps) {
+        TreeSet<Range> step = new TreeSet<>();
+        map.map(unmapped, step, mapped);
+        unmapped = step;
+      }
+      mapped.addAll(unmapped);
+      mergeRanges(mapped);
+      return mapped;
+    }
+  }
+
+  private static class RangeMap {
+    private final Range source;
+    private final long targetStart;
+
+    public RangeMap(long targetStart, long sourceStart, long length) {
+      source = new Range(sourceStart, sourceStart + length - 1);
+      this.targetStart = targetStart;
+    }
+
+    public Long map(long value) {
+      if (source.contains(value)) {
+        return targetStart + (value - source.start);
+      }
+      return null;
+    }
+
+    public void map(TreeSet<Range> in, TreeSet<Range> unmapped, TreeSet<Range> mapped) {
+      for (Range range : in) {
+        if (source.end < range.start || source.start > range.end) {
+          unmapped.add(range);
+          continue;
+        }
+        if (range.start < source.start) {
+          unmapped.add(new Range(range.start, source.start - 1));
+        }
+        if (range.end > source.end) {
+          unmapped.add(new Range(source.end + 1, range.end));
+        }
+        long mappedStart = targetStart + (Math.max(source.start, range.start) - source.start);
+        long mappedEnd = targetStart + (Math.min(source.end, range.end) - source.start);
+        mapped.add(new Range(mappedStart, mappedEnd));
+      }
+    }
+  }
+
+  static class Range implements Comparable<Range> {
+    long start;
+    long end;
+
+    public Range(long start, long end) {
+      this.start = start;
+      this.end = end;
+    }
+
+    public boolean overlapOrAdjacent(Range range) {
+      return range.contains(start) || range.contains(end + 1) || contains(range.start);
+    }
+
+    public boolean contains(long value) {
+      return value >= start && value <= end;
+    }
+
+    @Override
+    public int compareTo(Range o) {
+      long r = start - o.start;
+      if (r == 0) {
+        r = end - o.end;
+      }
+      if (r < 0) {
+        return -1;
+      } else if (r > 0) {
+        return 1;
+      } else {
+        return 0;
+      }
     }
   }
 }
