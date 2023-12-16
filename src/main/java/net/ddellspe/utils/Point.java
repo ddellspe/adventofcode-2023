@@ -30,6 +30,10 @@ public class Point {
     return x == point.x && y == point.y;
   }
 
+  public Point move(Point point) {
+    return new Point(this.x + point.x, this.y + point.y);
+  }
+
   public Set<Point> getPointsBetween(Point point) {
     if (this.x != point.x && this.y != point.y) {
       throw new IllegalStateException("Points must either share an X or Y coordinate");
