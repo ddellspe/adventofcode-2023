@@ -1,0 +1,4 @@
+broadcaster -> tx
+%tx -> vx
+&vx -> sx
+&sx -> rx
