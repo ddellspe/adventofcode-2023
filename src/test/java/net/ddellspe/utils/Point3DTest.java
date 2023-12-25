@@ -123,4 +123,17 @@ public class Point3DTest {
   public void testParseFromString() {
     assertEquals(new Point3D(0, 0, 0), new Point3D("0,0,0"));
   }
+
+  @Test
+  public void testMove() {
+    Point3D pt = new Point3D("0,0,0");
+    Point3D newPt = pt.move(new Point3D("1,1,1"));
+    assertEquals(new Point3D("1,1,1"), newPt);
+  }
+
+  @Test
+  public void testMultiply() {
+    Point3D pt = new Point3D(1, 1, 1);
+    assertEquals(new Point3D(3, 3, 3), pt.multiply(3L));
+  }
 }

@@ -19,9 +19,13 @@ public class Point3D implements Comparable {
 
   public Point3D(String coordinates) {
     String[] coords = coordinates.split(",");
-    this.x = Integer.parseInt(coords[0]);
-    this.y = Integer.parseInt(coords[1]);
-    this.z = Integer.parseInt(coords[2]);
+    this.x = Long.parseLong(coords[0]);
+    this.y = Long.parseLong(coords[1]);
+    this.z = Long.parseLong(coords[2]);
+  }
+
+  public Point3D move(Point3D amount) {
+    return new Point3D(x + amount.x, y + amount.y, z + amount.z);
   }
 
   @Override
@@ -167,6 +171,10 @@ public class Point3D implements Comparable {
       }
     }
     return points;
+  }
+
+  public Point3D multiply(long value) {
+    return new Point3D(x * value, y * value, z * value);
   }
 
   @Override
